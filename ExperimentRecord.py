@@ -84,25 +84,7 @@ class ExperimentRecord(object):
         anomaly_labels_indexes_list.reverse()
         return anomaly_labels_indexes_list
     
-    def get_reward(self,state,action,next_state,exec_time):
-        anomaly_reward = 0
-        adaptation_reward = 50
-        skill_reward = 0
-        success_terminal_reward = 1000
-        # if action >= 1000:
-        #     skill_reward = -(10 +  exec_time)
-        # else :
-        #     skill_reward = -(10 +  exec_time + adaptation_reward )
-        skill_reward = -(50 +  exec_time)
-        if next_state[1] <= -2000:
-            anomaly_reward = -100
-        
-        total_reward = anomaly_reward + skill_reward
-        # terminated_state
-        if next_state[0] == 9:
-            total_reward += success_terminal_reward
-        total_reward = total_reward * 0.001
-        return float('%.5f' %total_reward)
+
 
     @property
     def extract_episode_tuples_for_q_table(self):
@@ -113,7 +95,9 @@ class ExperimentRecord(object):
         consider_anomaly_tag = False
         end_time_on_tag_0 = False
         norminal = 0
+        last_tag = None
         exp_tuples_list = []
+        exp_tuples_with_exec_time_list = []
         anomaly_labels_indexes_list = self.get_anomaly_label_to_indexes
         if anomaly_labels_indexes_list == 'false_positive' or  anomaly_labels_indexes_list == 'Unlabeled':
             return anomaly_labels_indexes_list
@@ -136,7 +120,7 @@ class ExperimentRecord(object):
                 end_time = record_time.secs
                 end_time_on_tag_0 = False
                 # error
-            if rowmsg['tag'] !=0 and next_state[0] != rowmsg['tag']:
+            if rowmsg['tag'] !=0 and last_tag != rowmsg['tag']:
                 if consider_anomaly_tag==False and rowmsg['tag'] < 0:
                     continue
                 # record the state.phase
@@ -148,6 +132,7 @@ class ExperimentRecord(object):
                     tuple_next_phase_recorded = True
                     consider_anomaly_tag = True
                     end_time_on_tag_0 = True
+                    last_tag =  rowmsg['tag']
                     continue
                 else :
                     # record the state.anomaly_condition
@@ -164,12 +149,11 @@ class ExperimentRecord(object):
                         except ValueError :
                             return "unknown_label"
                         consider_anomaly_tag = False
-                    
+                        last_tag = rowmsg['tag']
                     exec_time = floor(end_time - start_time)
-                    reward = self.get_reward(state,act,next_state,exec_time)
                     tuple_s = tuple(state)
-                    tuple_state = tuple(next_state)
-                    exp_tuple = (tuple_s,act,reward,tuple_state)
+                    tuple_n_s = tuple(next_state)
+                    exp_tuple = (tuple_s,act,tuple_n_s,exec_time)
                     exp_tuples_list.append(exp_tuple)
                     state = np.array((0,0))
                     state = next_state
@@ -180,24 +164,33 @@ class ExperimentRecord(object):
                     
 
         tuple_s = tuple(state)
-        tuple_state = tuple(next_state)
+        tuple_n_s = tuple(next_state)
         
         # Do not count the skill 9 exec time
-        exec_time = 0
-        reward = self.get_reward(state,act,next_state,exec_time)
-        
+        exec_time = 2
         try :
-            exp_tuple = (tuple_s,act,reward,tuple_state)
+            exp_tuple = (tuple_s,act,tuple_n_s,exec_time)
         except UnboundLocalError as err:
             return 'No_nominal_tag_is_recorded'
         if next_state[0] != 9:
             return 'no_tag_9'
         exp_tuples_list.append(exp_tuple)
-        return exp_tuples_list
+        exp_tuples_with_exec_time_list = self.get_states_with_time(exp_tuples_list)
+        return exp_tuples_with_exec_time_list
 
     # ================================================================================================
 
-
+    def get_states_with_time(self, exp_tuples_list):
+        state_action_time = 0
+        exp_tuples_with_exec_time_list = []
+        for e_tuple in exp_tuples_list:
+            state, act, next_state, exec_time = e_tuple
+            state = (state[0],state[1],state_action_time)
+            next_state =  (next_state[0],next_state[1],exec_time)
+            state_action_time = exec_time
+            new_tuple = (state, act, next_state)
+            exp_tuples_with_exec_time_list.append(new_tuple)
+        return exp_tuples_with_exec_time_list
 
 
     @property
