@@ -10,6 +10,8 @@ This is a repo built on top of [smach_based_introspection_framework](https://git
 # Anomaly Type
 In warehouse worker-robot cooperation setting, there are some common anomalies that happen offen.
 
+[image1]: https://github.com/YijiongLin/SPAIR_with_RL/blob/master/hc.gif "human collision"
+
 
 Youtube: https://youtu.be/aoD8lXBLtK0
 
