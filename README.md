@@ -1,3 +1,7 @@
+[//]: # (Image References)
+[image1]: https://github.com/YijiongLin/SPAIR_with_RL/blob/master/hc.gif "human collision"
+
+
 # SPAIR_with_Reinforcement_Learning
  
 This is a repo built on top of [smach_based_introspection_framework](https://github.com/birlrobotics/smach_based_introspection_framework), aiming to endow the robot with the ability of recovery decision making with life-long self-learning.
@@ -10,7 +14,7 @@ This is a repo built on top of [smach_based_introspection_framework](https://git
 # Anomaly Type
 In warehouse worker-robot cooperation setting, there are some common anomalies that happen offen.
 
-[image1]: https://github.com/YijiongLin/SPAIR_with_RL/blob/master/hc.gif "human collision"
+![Human Collision][image1]
 
 
 Youtube: https://youtu.be/aoD8lXBLtK0
